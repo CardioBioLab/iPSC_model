@@ -1,0 +1,667 @@
+[[model]]
+author: Myokit API 1
+documentation: """
+   Divya C. Kernik
+   2019
+   A computational model of induced pluripotent stem-cell derived cardiomyocytes incorporating experimental variability from multiple data sources
+   
+   Abstract
+Key points
+Induced pluripotent stem cell-derived cardiomyocytes (iPSC-CMs) capture patient-specific genotype–phenotype relationships, as well as cell-to-cell variability of cardiac electrical activity
+Computational modelling and simulation provide a high throughput approach to reconcile multiple datasets describing physiological variability, and also identify vulnerable parameter regimes
+We have developed a whole-cell model of iPSC-CMs, composed of single exponential voltage-dependent gating variable rate constants, parameterized to fit experimental iPSC-CM outputs
+We have utilized experimental data across multiple laboratories to model experimental variability and investigate subcellular phenotypic mechanisms in iPSC-CMs
+This framework links molecular mechanisms to cellular-level outputs by revealing unique subsets of model parameters linked to known iPSC-CM phenotypes
+There is a profound need to develop a strategy for predicting patient-to-patient vulnerability in the emergence of cardiac arrhythmia. A promising in vitro method to address patient-specific proclivity to cardiac disease utilizes induced pluripotent stem cell-derived cardiomyocytes (iPSC-CMs). A major strength of this approach is that iPSC-CMs contain donor genetic information and therefore capture patient-specific genotype–phenotype relationships. A cited detriment of iPSC-CMs is the cell-to-cell variability observed in electrical activity. We postulated, however, that cell-to-cell variability may constitute a strength when appropriately utilized in a computational framework to build cell populations that can be employed to identify phenotypic mechanisms and pinpoint key sensitive parameters. Thus, we have exploited variation in experimental data across multiple laboratories to develop a computational framework for investigating subcellular phenotypic mechanisms. We have developed a whole-cell model of iPSC-CMs composed of simple model components comprising ion channel models with single exponential voltage-dependent gating variable rate constants, parameterized to fit experimental iPSC-CM data for all major ionic currents. By optimizing ionic current model parameters to multiple experimental datasets, we incorporate experimentally-observed variability in the ionic currents. The resulting population of cellular models predicts robust inter-subject variability in iPSC-CMs. This approach links molecular mechanisms to known cellular-level iPSC-CM phenotypes, as shown by comparing immature and mature subpopulations of models to analyse the contributing factors underlying each phenotype. In the future, the presented models can be readily expanded to include genetic mutations and pharmacological interventions for studying the mechanisms of rare events, such as arrhythmia triggers.
+    """
+name: GKMP
+
+# Initial values
+Voltage.Vm            = -7.5596602e+1
+Cai.Ca_SR             = 3.3508680e-1
+Cai.Cai               = 2.1919164e-4
+Nai.Nai               = 7.1692809e+0 
+Ki.Ki                 = 1.0474882e+2
+Cai.d                 = 3.9492534e-4
+Cai.f                 = 1.7099011e-1
+Cai.fCa               = 8.7779895e-1
+IKr.Xr1               = 3.0976749e-1
+IKr.Xr2               = 4.5057719e-1 
+IKs.Xs                = 1.5378828e-1
+Nai.h                 = 7.3954361e-1
+Nai.j                 = 1.2451598e-1
+Nai.m                 = 2.9754996e-2
+Ito.s                 = 7.4680281e-1 
+Ito.r                 = 2.6759783e-4
+CaT.dcat              = 2.7019557e-4
+CaT.fcat              = 7.5603290e-1
+Ifun.Xf               = 6.4033850e-3
+J_x.R                 = 1.1312036e-2
+J_x.O                 = 1.6504511e-4
+J_x.I                 = 1.4215362e-2
+
+[Cell]
+Cm = 60
+    in [pF]
+V_tot = 3960
+    in [um^3]
+Vc_tenT = 16404
+    in [um^3]
+VSR_tenT = 1094
+    in [um^3]
+V_tot_tenT = Vc_tenT + VSR_tenT
+    in [um^3]
+Vc = V_tot * ( Vc_tenT / V_tot_tenT )
+    in [um^3]
+V_SR = V_tot * ( VSR_tenT / V_tot_tenT )
+    in [um^3]
+[Const]
+F = 96.485 [C/mmol]
+    in [C/mmol]
+R = 8.314 [J/mol/K]
+    in [J/mol/K]
+T = 310 [K]
+    in [K]
+Ko = 5.4
+    in [mM]
+Cao = 1.8
+    in [mM]
+Nao = 140.0
+    in [mM]
+[RP]
+E_Ca = 0.5 * Const.R * Const.T / Const.F * log( Const.Cao / Cai.Cai)
+    in [mV]
+E_Na = Const.R * Const.T / Const.F * log( Const.Nao / Nai.Nai)
+    in [mV]
+E_K = Const.R * Const.T / Const.F * log( Const.Ko / Ki.Ki)
+    in [mV]
+    
+            
+[Cai]
+Buf_C = 0.06 [mM]
+    in [mM]
+Kbuf_C = 0.0006 [mM]
+    in [mM]
+Cai_bufc = 1 / ( 1.0 + Buf_C * Kbuf_C / ( ( Cai + Kbuf_C ) * ( Cai + Kbuf_C ) ) )
+    in [mM]
+dot(Cai) = ( Cai_bufc ) * ( J_x.i_leak - J_x.i_up + J_x.i_rel  - ( i_CaL_Ca + CaT.i_CaT + I_bpx.i_b_Ca + I_bpx.i_PCa - 2. * INaCa.i_NaCa )* Cell.Cm / ( 2.0 * Cell.Vc * Const.F ) )
+    in [mM] 
+    
+    
+d1 = 1.2966294e+1
+    in[1]
+d2 = 7.0791460e+0
+    in[1]
+d5 = 4.4909416e-2
+    in[1]
+d6 = -6.9098804e+0
+    in[1]
+f1 = 5.1258983e-4
+    in[1]
+f2 = -4.9505712e+1
+    in[1]
+f5 = 1.9312112e+3
+    in[1]
+f6 = 5.7300275e+0
+    in[1]
+d3 = d5 * d1
+    in[1]
+d4 = 1 / ( ( 1 / d2 ) + ( 1 / d6 ) )
+    in[1]
+f3 = f5 * f1
+    in[1]
+f4 = 1 / ( ( 1 / f2 ) + ( 1 / f6 ) )
+    in[1]
+taud_const = 1.6582469e+0
+    in[1]
+tauf_const = 1.0046256e+2
+    in[1]
+alpha_d = d1 * exp( ( ( Voltage.Vm ) ) / d2 )
+    in[1]
+beta_d = d3 * exp( ( ( Voltage.Vm ) ) / d4 )
+    in[1]
+d_inf = alpha_d / ( alpha_d + beta_d )
+    in[1]
+tau_d = ( ( 1 / ( alpha_d + beta_d ) ) + taud_const )
+    in[1]
+dot(d) = ( d_inf - d ) / tau_d
+    in[1]
+alpha_f = f1 * exp( ( ( Voltage.Vm ) ) / f2 )
+    in[1]
+beta_f = f3 * exp( ( ( Voltage.Vm ) ) / f4 )
+    in[1]
+f_inf = alpha_f / ( alpha_f + beta_f )
+    in[1]
+tau_f = ( ( 1 / ( alpha_f + beta_f ) ) + tauf_const )
+    in[1]
+dot(f) = ( f_inf - f ) / tau_f
+    in[1]
+scale_Ical_Fca_Cadep = 1.2
+    in[1]
+alpha_fCa = 1.0 / ( 1.0 + ( ( ( scale_Ical_Fca_Cadep * Cai ) / 0.000325 ) )^8 )
+    in[1]
+beta_fCa = 0.1 / ( 1.0 + exp( ( scale_Ical_Fca_Cadep * Cai - 0.0005 ) / 0.0001 ) )
+    in[1]
+gamma_fCa = 0.2 / ( 1.0 + exp( ( scale_Ical_Fca_Cadep * Cai - 0.00075 ) / 0.0008 ) )
+    in[1]
+fCa_inf = ( ( alpha_fCa + beta_fCa + gamma_fCa + 0.23 ) / ( 1.46 ) )
+    in[1]
+tau_fCa = 2
+    in[ms]
+k_fca = piecewise(fCa_inf > fCa and Voltage.Vm > -60 [mV], 0, 1)
+    in[1]
+dot(fCa) = k_fca * ( fCa_inf - fCa ) / tau_fCa
+    in[1]
+p_CaL =  3.0802769e-01
+    in[nS/pF]
+p_CaL_shannonCa = 5.4e-4
+    in[1]
+p_CaL_shannonNa = 1.5e-8
+    in[1]
+p_CaL_shannonK = 2.7e-7
+    in[1]
+p_CaL_shannonTot = p_CaL_shannonCa + p_CaL_shannonNa + p_CaL_shannonK
+    in[1]
+p_CaL_shannonCap = p_CaL_shannonCa / p_CaL_shannonTot
+    in[1]
+p_CaL_shannonNap = p_CaL_shannonNa / p_CaL_shannonTot
+    in[1]
+p_CaL_shannonKp = p_CaL_shannonK / p_CaL_shannonTot
+    in[1]
+p_CaL_Ca = p_CaL_shannonCap * p_CaL
+    in[nS/pF]
+p_CaL_Na = p_CaL_shannonNap * p_CaL
+    in[nS/pF]
+p_CaL_K = p_CaL_shannonKp * p_CaL
+    in[nS/pF]
+ibarca= ( p_CaL_Ca * 4.0 * Voltage.Vm * Const.F * Const.F / ( Const.R * Const.T ) * ( 0.341 * Cai * exp( 2.0 * Voltage.Vm * Const.F / ( Const.R * Const.T ) ) - 0.341 * Const.Cao ) / ( exp( 2.0 * Voltage.Vm * Const.F / ( Const.R * Const.T ) ) - 1.0 ) )
+    in[pA/pF]
+i_CaL_Ca =  ibarca * d * f * fCa
+    in[pA/pF]
+ibarna = ( p_CaL_Na * Voltage.Vm * Const.F * Const.F / ( Const.R * Const.T ) * ( 0.75 * Nai.Nai * exp( Voltage.Vm * Const.F / ( Const.R * Const.T ) ) - 0.75 * Const.Nao ) / ( exp( Voltage.Vm * Const.F / ( Const.R * Const.T ) ) - 1.0 ) )
+    in[pA/pF]
+i_CaL_Na =  ibarna * d * f * fCa
+    in[pA/pF]
+ibark = ( p_CaL_K * Voltage.Vm * Const.F * Const.F / ( Const.R * Const.T ) * ( 0.75 * Ki.Ki * exp( Voltage.Vm * Const.F / ( Const.R * Const.T ) ) - 0.75 * Const.Ko ) / ( exp( Voltage.Vm * Const.F / ( Const.R * Const.T ) ) - 1.0 ) )
+    in[pA/pF]
+i_CaL_K = ibark * d * f * fCa
+    in[pA/pF]
+i_CaL = i_CaL_Ca + i_CaL_Na + i_CaL_K
+    in[pA/pF] 
+    
+Buf_SR = 10.0 * 1.2
+    in [mM]
+Kbuf_SR = 0.3
+    in [mM]
+Ca_SR_bufSR = ( 1/ ( 1.0+ Buf_SR * Kbuf_SR / ( ( Ca_SR + Kbuf_SR ) * ( Ca_SR + Kbuf_SR ) ) ) )
+    in [mM]
+dot(Ca_SR) = Ca_SR_bufSR * Cell.Vc / Cell.V_SR * ( J_x.i_up - ( J_x.i_rel + J_x.i_leak ) )  
+    in [mM]
+    
+[Nai]
+dot(Nai) = -Cell.Cm * ( i_Na + I_bpx.i_b_Na+ Ifun.i_fNa + 3.0 * INaK.i_NaK + 3.0 * INaCa.i_NaCa + Cai.i_CaL_Na ) / ( Const.F * Cell.Vc )
+    in [mM]
+
+
+m1=1.0804585e+2
+    in [1]
+m2=1.3107016e+1
+    in [1]
+m5=2.3269144e-3
+    in [1]
+m6=-7.9177263
+    in [1]
+h1=3.6265989e-3
+    in [1]
+h2=-1.9839359e+1
+    in [1]
+h5=9.6632950e+3
+    in [1]
+h6=7.3955036
+    in [1]
+j1=5.1225718e-4
+    in [1]
+j2=-6.6583756e+1
+    in [1]
+tau_m_const=3.1977580e-2
+    in [1]
+tau_h_const=1.6733150e-1
+    in [1]
+tau_j_const=9.5108872e-1
+    in [1]
+    
+
+m3 = m5 * m1
+    in [1]
+m4 = 1 / ( ( 1 / m2 ) + ( 1 / m6 ) )
+    in [1]
+h3 = h5 * h1
+    in [1]
+h4 = 1 / ( ( 1 / h2 ) + ( 1 / h6 ) )
+    in [1]
+j5 = h5
+    in [1]
+j6 = h6
+    in [1]
+j3 = j5 * j1
+    in [1]
+j4 = 1 / ( ( 1 / j2 ) + ( 1 / j6 ) )
+    in [1]
+    
+
+alpha_h = h1 * exp( ( Voltage.Vm ) / h2 )
+    in [1]
+beta_h = h3 * exp( ( Voltage.Vm ) / h4 )
+    in [1]
+h_inf = ( alpha_h / ( alpha_h + beta_h ) )
+    in [1]
+tau_h = ( ( 1 / ( alpha_h + beta_h ) ) + tau_h_const )
+    in [1]
+dot(h) = ( h_inf - h ) / tau_h
+    in [1]
+
+alpha_j = j1 * exp( ( Voltage.Vm ) / j2 )
+    in [1]
+beta_j = j3 * exp( (Voltage.Vm ) / j4 )
+    in [1]
+j_inf = ( alpha_j / ( alpha_j + beta_j ) )
+    in [1]
+tau_j = ( ( 1 / ( alpha_j + beta_j ) ) + tau_j_const )
+    in [1]
+dot(j) = ( j_inf - j ) / tau_j
+    in [1]
+    
+
+alpha_m = m1 * exp( ( Voltage.Vm ) / m2 )
+    in [1]
+beta_m = m3 * exp( ( Voltage.Vm ) / m4 )
+    in [1]
+m_inf = alpha_m / ( alpha_m + beta_m )
+    in [1]
+tau_m = ( ( 1 / ( alpha_m + beta_m ) ) + tau_m_const )
+    in [1]
+dot(m) = ( m_inf - m ) / tau_m
+    in [1]
+    
+
+g_Na = 9.7206134
+    in [ns/pF]
+i_Na = g_Na * m * m * m * h * j * ( Voltage.Vm - RP.E_Na )  
+    in [pA/pF]
+    
+[Ki]
+dot(Ki) = -Cell.Cm * ( IK1.i_K1 + Ito.i_to + IKr.i_Kr + IKs.i_Ks + Ifun.i_fK - 2 * INaK.i_NaK + Cai.i_CaL_K ) / ( Const.F * Cell.Vc )
+    in [mM]
+
+
+[INaCa]
+
+KmCa = 1.38 [mM]
+    in [mM]
+KmNai = 87.5 [mM]
+    in [mM]
+Ksat = 0.1
+    in [1]
+gamma = 0.35*2
+    in [1]
+alpha = 2.5*1.1
+    in [1]
+kNaCa = 1000 * 1.1 
+    in [pA/pF]
+    
+i_NaCa = ( kNaCa * ( ( exp( gamma * Voltage.Vm * Const.F / ( Const.R * Const.T ) )
+                                 * ( Nai.Nai * Nai.Nai * Nai.Nai ) * Const.Cao )
+                               - ( exp( ( gamma - 1.0 ) * Voltage.Vm * Const.F / ( Const.R * Const.T ) )
+                                  * ( Const.Nao * Const.Nao * Const.Nao ) * Cai.Cai * alpha ) )
+                     / ( ( ( KmNai * KmNai * KmNai ) + ( Const.Nao * Const.Nao * Const.Nao ) )
+                        * ( KmCa + Const.Cao )
+                        * ( 1.0 + Ksat * exp( ( gamma - 1.0 ) * Voltage.Vm * Const.F / ( Const.R * Const.T ) ) ) ) )
+     in [pA/pF]                       
+    
+[INaK]
+
+Km_K = 1.0
+    in [mM]
+Km_Na = 40.0
+    in [mM]
+PNaK = 1.362 * 1.818
+    in [pA/pF]
+i_NaK = ( PNaK * ( ( Const.Ko * Nai.Nai )
+                             / ( ( Const.Ko + Km_K ) * ( Nai.Nai + Km_Na )
+                                * ( 1.0
+                                   + 0.1245 * exp( -0.1 * Voltage.Vm * Const.F / ( Const.R * Const.T ) )
+                                   + 0.0353 * exp( -Voltage.Vm * Const.F / ( Const.R * Const.T ) ) ) ) ) )
+    in [pA/pF]                                   
+[J_x]
+
+Kup = 0.00025 * 0.702
+    in [mM]
+VmaxUp = 0.000425 * 0.26 
+    in [mM/ms]
+i_up = VmaxUp / ( 1.0 + Kup * Kup / ( Cai.Cai * Cai.Cai ) )
+    in [pA/pF]
+    
+
+V_leak = 0.00008 * 0.02
+    in [1/ms]
+i_leak = (Cai.Ca_SR - Cai.Cai ) * V_leak
+    in [pA/pF]
+    
+
+ks = 12.5 
+    in [1/ms]
+koCa = 56320. * 11.43025
+    in [1/mM/mM/ms] 
+kiCa = 54. * 0.3425
+    in [1/mM/ms]
+kom = 1.5 * 0.1429
+    in [1/ms]
+kim = 0.001 * 0.5571
+    in [1/ms]
+ec50SR = 0.45
+    in [1]
+MaxSR = 15
+    in [1]
+MinSR = 1
+    in [1]
+    
+kCaSR = MaxSR - ( MaxSR - MinSR ) / ( 1 + ( ec50SR / Cai.Ca_SR )^ (2.5) ) 
+    in [1]
+koSRCa = koCa / kCaSR
+    in [1]
+kiSRCa = kiCa * kCaSR
+    in [1]
+RI = 1 - R - O - I 
+    in [1]
+ 
+dot(R) = ( ( kim * RI - kiSRCa * Cai.Cai * R )
+              - ( koSRCa * Cai.Cai * Cai.Cai * R  - kom * O ) )
+    in [1]
+dot(O) = ( ( koSRCa * Cai.Cai * Cai.Cai * R - kom * O )
+              - ( kiSRCa * Cai.Cai * O - kim * I ) )
+    in [1]          
+dot(I) = ( ( kiSRCa * Cai.Cai * O - kim * I )
+              - ( kom * I - koSRCa * Cai.Cai * Cai.Cai * RI ) )
+    in [1]          
+    
+i_rel = ks * O * ( Cai.Ca_SR - Cai.Cai ) * ( Cell.V_SR / Cell.Vc )
+    in [pA/pF]
+
+[I_bpx]
+g_b_Na = 0.00029 * 1.5 
+    in [mS/pF]
+i_b_Na = g_b_Na * ( Voltage.Vm  - RP.E_Na )
+    in [pA/pF]
+
+g_b_Ca = 0.000592 * 0.62 
+    in [ns/pF]
+i_b_Ca = g_b_Ca * ( Voltage.Vm - RP.E_Ca )
+    in [pA/pF]
+
+g_PCa = 0.025 * 10.5
+    in [pA/pF]
+KPCa = 0.0005
+    in [mM]
+i_PCa = g_PCa * Cai.Cai / ( Cai.Cai + KPCa )
+    in [pA/pF]
+    
+
+
+[IK1]  
+xK11 = 4.7799497e-1
+    in [1]
+xK12 = 2.7242756e+1
+    in [1]
+xK13 = 4.9250233e+0
+    in [1]
+xK14 = 8.7222376e+0
+    in [1]
+xK15 = 5.6636197e+1
+    in [1]
+    
+alpha_xK1 = xK11 * exp( ( Voltage.Vm + xK13 ) / xK12 )
+    in [1]
+beta_xK1 = exp( ( Voltage.Vm + xK15 ) / xK14 )
+    in [1]
+XK1_inf = alpha_xK1 / ( alpha_xK1 + beta_xK1 )
+    in [1]
+g_K1 = 1.3378578e-1 [mS/uF]
+    in [mS/uF]
+i_K1 = g_K1 * XK1_inf * ( Voltage.Vm - RP.E_K ) * sqrt( Const.Ko / 5.4 )
+    in [pA/pF]
+[CaT]
+dcat_inf = 1 / ( 1 + exp(-((Voltage.Vm)+26.3)/6))
+    in [1]
+tau_dcat = 1 / ( 1.068 * exp( ( ( Voltage.Vm ) + 26.3 ) / 30 ) + 1.068 * exp( -( ( Voltage.Vm ) + 26.3 ) / 30 ) )
+    in [1]
+dot(dcat) = ( dcat_inf - dcat ) / tau_dcat
+    in [1]
+fcat_inf = 1 / ( 1 + exp( ( ( Voltage.Vm ) + 61.7 ) / 5.6 ) )
+    in [1]
+tau_fcat = 1 / ( 0.0153 * exp( -( ( Voltage.Vm ) + 61.7 ) / 83.3 ) + 0.015 * exp( ( ( Voltage.Vm ) + 61.7 ) / 15.38 ) )
+    in [1]
+dot(fcat) = ( fcat_inf - fcat ) / tau_fcat
+    in [1]
+g_CaT = 0.185 [nS/pF]
+    in [nS/pF]
+i_CaT = g_CaT * ( Voltage.Vm - RP.E_Ca ) * dcat * fcat
+    in [pA/pF]
+[IKr]   
+
+Xr1_1 = 5.7488524e-3
+    in [1]
+Xr1_2 = 1.3623493e+1
+    in [1]
+Xr1_5 = 4.7630571e-2
+    in [1]
+Xr1_6 = -7.0680874e+0
+    in [1]
+Xr2_1 = 1.2456641e-2
+    in [1]
+Xr2_2 = -2.5994458e+1
+    in [1]
+Xr2_5 = 3.7342633e+1
+    in [1]
+Xr2_6 = 2.2091964e+1
+    in [1]
+
+Xr1_3 = Xr1_5 * Xr1_1
+    in [1]
+Xr2_3 = Xr2_5 * Xr2_1
+    in [1]
+Xr1_4 = 1 / ( ( 1 / Xr1_2 ) + ( 1 / Xr1_6 ) )
+    in [1]
+Xr2_4 = 1 / ( ( 1 / Xr2_2 ) + ( 1 / Xr2_6 ) )
+    in [1]
+    
+alpha_Xr1 = Xr1_1 * exp( ( Voltage.Vm ) / Xr1_2 )
+    in [1]
+beta_Xr1 = Xr1_3 * exp( ( Voltage.Vm ) / Xr1_4 )
+    in [1]
+Xr1_inf = alpha_Xr1 / ( alpha_Xr1 + beta_Xr1 )
+    in [1]
+tau_Xr1 = ( ( 1 / ( alpha_Xr1 + beta_Xr1 ) ) + 5.0000000e+1 )
+    in [1]
+
+dot(Xr1) = ( Xr1_inf - Xr1 ) / tau_Xr1
+    in [1]
+alpha_Xr2 = Xr2_1 * exp( ( Voltage.Vm ) / Xr2_2 )
+    in [1]
+beta_Xr2 = Xr2_3 * exp( ( Voltage.Vm ) / Xr2_4 )
+    in [1]
+Xr2_inf = alpha_Xr2 / ( alpha_Xr2 + beta_Xr2 )
+    in [1]
+tau_Xr2 = ( ( 1 / ( alpha_Xr2 + beta_Xr2 ) ) ) 
+    in [1]
+dot(Xr2) = ( Xr2_inf - Xr2 ) / tau_Xr2
+    in [1]
+ 
+g_Kr = 2.1802500e-1
+    in [nS/pF]
+i_Kr = g_Kr * ( Voltage.Vm - RP.E_K ) * Xr1 * Xr2 * sqrt( Const.Ko / 5.4 )
+    in [pA/pF]
+    
+[IKs]
+
+ks1 = 1.1655845e-3
+    in [1]
+ks2 = 6.6726839e+4
+    in [1]
+ks5 = 2.8045891e-1
+    in [1]
+ks6 = -1.8866972e+1
+    in [1]
+tauks_const = 4.7411500e-6
+    in [1]
+ks3 = ks5 * ks1
+    in [1]
+ks4 = 1 / ( ( 1 / ks2 ) + ( 1 / ks6 ) )
+    in [1]
+alpha_Xs = ks1 * exp( ( Voltage.Vm ) / ks2 )
+    in [1]
+beta_Xs = ks3 * exp( ( Voltage.Vm ) / ks4 )
+    in [1]
+Xs_inf = alpha_Xs / ( alpha_Xs + beta_Xs )
+    in [1]
+tau_Xs = ( 1 / ( alpha_Xs + beta_Xs ) ) + tauks_const
+    in [1]
+
+dot(Xs) = ( Xs_inf - Xs) / tau_Xs
+    in [1]
+
+g_Ks = 7.7000000e-3
+    in [ns/pF]
+i_Ks = g_Ks * ( Voltage.Vm - RP.E_K ) * Xs * Xs
+    in [pA/pF]
+[Ito]
+
+r1 = 5.5361418e-2
+    in [1]
+r2 = 1.1684202e+1
+    in [1]
+r5 = 3.9891811e+0
+    in [1]
+r6 = -1.1047139e+1
+    in [1]
+s1 = 3.4423094e-4
+    in [1]
+s2 = -1.7634472e+1
+    in [1]
+s5 = 1.8676054e+2
+    in [1]
+s6 = 8.1809339e+0
+    in [1]
+tau_r_const = 6.9675842e-1
+    in [1]
+tau_s_const = 1.1224458e+1
+    in [1]
+
+r3 = r5 * r1
+    in [1]
+r4 = 1 / ( ( 1 / r2 ) + ( 1 / r6 ) )
+    in [1]
+s3 = s5 * s1
+    in [1]
+s4 = 1 / ( ( 1 / s2 ) + ( 1 / s6 ) )
+    in [1]
+
+alpha_s = s1 * exp( (Voltage.Vm) / s2 )
+    in [1]
+beta_s = s3 * exp( ( Voltage.Vm ) / s4)
+    in [1]
+s_inf = alpha_s / ( alpha_s + beta_s )
+    in [1]
+tau_s = ( ( 1 / ( alpha_s + beta_s ) ) + tau_s_const )
+    in [1]
+dot(s)  = ( s_inf - s ) / tau_s
+    in [1]
+    
+alpha_r = r1 * exp( (Voltage.Vm) / r2 )
+    in [1]
+beta_r = r3 * exp( ( Voltage.Vm ) / r4 )
+    in [1]
+r_inf = alpha_r / ( alpha_r + beta_r )
+    in [1]
+tau_r = ( 1 / ( alpha_r + beta_r ) ) + tau_r_const
+    in [1]
+dot(r) = ( r_inf - r ) / tau_r
+    in [1]
+    
+g_to = 1.1783333e-1  
+    in [ns/pF]
+i_to = g_to * ( Voltage.Vm - RP.E_K ) * s * r
+    in [pA/pF]
+[Ifun]
+
+xF1 = 5.7897000e-07
+    in [1]
+xF2 = -1.4589712e+01
+    in [1]
+xF5 = 2.0086650e+04
+    in [1]
+xF6 = 1.0202353e+01
+    in [1]
+xF_const = 2.3945291e+01
+    in [1]
+    
+xF3 = xF5 * xF1
+    in [1]
+xF4 = 1 / ( ( 1 / xF2 ) + ( 1 / xF6 ) )
+    in [1]
+    
+
+#alpha_Xf = xF1 * exp( ( Voltage.Vm ) / xF2 )
+  #  in [1]
+#beta_Xf = xF3 * exp( ( Voltage.Vm ) / xF4 )
+   # in [1]
+#Xf_inf = alpha_Xf / ( alpha_Xf + beta_Xf )
+   # in [1]
+#tau_Xf = ( ( 1 / ( alpha_Xf + beta_Xf ) ) + xF_const )
+   # in [1]
+#dot(Xf)= ( Xf_inf - Xf ) / tau_Xf
+   # in [1]
+    
+alpha_Xf = 0
+    in [1]
+beta_Xf = 0
+    in [1]
+Xf_inf = 0
+    in [1]
+tau_Xf = 0
+    in [1]
+dot(Xf)= 0
+    in [1]
+
+
+
+g_f = 4.3500000e-02 
+    in [ns/pF]
+NatoK_ratio = 0.491
+    in [1]
+Na_frac = NatoK_ratio / ( NatoK_ratio + 1 )
+    in [1]
+i_fNa = Na_frac * g_f * Xf * ( Voltage.Vm - RP.E_Na )
+    in [pA/pF]
+i_fK = ( 1 - Na_frac ) * g_f * Xf * ( Voltage.Vm - RP.E_K )
+    in [pA/pF]
+i_f = i_fNa + i_fK
+    in [pA/pF]
+[environment]
+time = 0 [ms] bind time
+    in [ms]    
+[Voltage]
+i_stim = pace * stim_amplitude
+    in [pA/pF]
+pace = 0 bind pace
+    in [1]
+stim_amplitude = 2000 [pA/pF]
+    in [pA/pF]
+i_diff = 0 bind diffusion_current
+        
+    
+dot(Vm)= -( IK1.i_K1 + Ito.i_to + IKr.i_Kr + IKs.i_Ks + Cai.i_CaL
+              + CaT.i_CaT + INaK.i_NaK + Nai.i_Na + INaCa.i_NaCa + I_bpx.i_PCa
+            + I_bpx.i_b_Na + Ifun.i_f + I_bpx.i_b_Ca - i_stim + i_diff)
+    in [mV]
+    label membrane_potential
+
